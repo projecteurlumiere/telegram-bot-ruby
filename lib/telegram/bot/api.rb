@@ -5,10 +5,11 @@ module Telegram
     class Api
       attr_reader :token, :url, :environment
 
-      def initialize(token, url: 'https://api.telegram.org', environment: :production)
+      def initialize(token, url: 'https://api.telegram.org', environment: :production, client:)
         @token = token
         @url = url
         @environment = environment.downcase.to_sym
+        @rate_limiter = Telegram::Bot::RateLimiter.run
       end
 
       def connection
@@ -48,6 +49,10 @@ module Telegram
         raise Exceptions::ResponseError.new(response: response) unless response.status == 200
 
         JSON.parse(response.body)
+      end
+
+      def stop
+        @rate_limiter.stop
       end
 
       private

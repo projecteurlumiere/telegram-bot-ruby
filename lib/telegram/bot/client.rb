@@ -3,7 +3,7 @@
 module Telegram
   module Bot
     class Client
-      attr_reader :api, :options
+      attr_reader :api, :options, :running
       attr_accessor :logger
 
       def self.run(*args, &block)
@@ -12,7 +12,7 @@ module Telegram
 
       def initialize(token, hash = {})
         @options = default_options.merge(hash)
-        @api = Api.new(token, url: options.delete(:url), environment: options.delete(:environment))
+        @api = Api.new(token, url: options.delete(:url), environment: options.delete(:environment), client: self)
         @logger = options.delete(:logger)
       end
 
@@ -28,6 +28,7 @@ module Telegram
 
       def stop
         @running = false
+        @api.stop
       end
 
       def fetch_updates
