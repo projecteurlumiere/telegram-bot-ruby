@@ -3,7 +3,7 @@
 module Telegram
   module Bot
     class Api
-      attr_reader :token, :url, :environment
+      attr_reader :token, :url, :environment, :rate_limiter
 
       def initialize(token, url: 'https://api.telegram.org', environment: :production, client:)
         @token = token
@@ -45,14 +45,14 @@ module Telegram
       def call(endpoint, raw_params = {})
         params = build_params(raw_params)
         path = build_path(endpoint)
-        response = connection.post(path, params)
+        response = rate_limiter.execute { connection.post(path, params) }
         raise Exceptions::ResponseError.new(response: response) unless response.status == 200
 
         JSON.parse(response.body)
       end
 
       def stop
-        @rate_limiter.stop
+        rate_limiter.stop
       end
 
       private

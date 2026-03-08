@@ -4,21 +4,23 @@ require 'async/notification'
 
 module Telegram
   module Bot
-    module RateLimiter    
+    module RateLimiter
       class BaseAdapter
+        attr_reader :user_interval, :group_interval
+
         def initialize
           @user_interval  = Telegram::Bot.configuration.user_rate_interval
           @group_interval = Telegram::Bot.configuration.group_rate_interval
           @running        = true
 
-          # intervals.each { process_jobs } ???
-          process_jobs
+          [user_interval, group_interval].each do |interval|
+            process_jobs
+          end
         end
 
         def execute(params)
-          if id = id_from_params(params)
-            enqueue(id)
-          end
+          id = id_from_params(params)
+          enqueue(id) unless id.nil?
 
           yield
         end
@@ -36,13 +38,13 @@ module Telegram
             [
               chat_id,
               params.fetch(:message_thread_id, 0)
-            ].join("_")
+            ].join('_')
           else
             chat_id
           end
         end
 
-        def enqueue(id)
+        def enqueue(_id)
           raise "Method `#{__method__}` must be defined in the child class"
         end
 
